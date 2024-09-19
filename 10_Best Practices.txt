@@ -1,0 +1,377 @@
+Data preparation best practices
+As discussed in previous chapters, data preparation is a critical step to make sure your data is well organized, clean, and optimized for analysis in BigQuery. By following the data preparation best practices listed in this section, you will be ready to perform cost-effective regular operations on BigQuery.
+
+Understanding your data and business requirements
+Before doing any data preparation or analysis, you want to have a good understanding of your data and the business questions you wish to answer. It is recommended to have a good idea of your requirements and the opportunities in the data for business insights. Make it your mission to gain insights into the specific identified area of your business and data. This will guide you in designing an appropriate schema and choosing the right data types, which will allow you to operate efficiently and cost-effectively.
+
+Denormalizing your data
+Storing related data in the same table can improve performance for queries that access multiple related tables. In older data strategies, when storage was expensive, database analysts (DBAs) would normalize data or split it into multiple tables to reduce redundant data. We still strive to reduce redundant storage but not so much for cost reasons, mostly for operational reasons such as business agility. The cloud has eliminated the previous need to procure physical hard disk drives (HDDs) or solid-state drives (SSDs) in a time when storage was limited. In modern data warehouses, where storage is relatively cheap, denormalization has advantages, such as faster data retrieval, improved read performance, and easier queries (fewer joins).
+
+Optimizing schema design
+It is important to thoughtfully design your schema and carefully validate data types and column names when importing data. A well-designed schema is important for efficient and effective data management in BigQuery as it directly impacts query performance, data organization, and overall usability. Use the schema design to enforce data consistency and define appropriate data types. This helps prevent data inconsistencies, reduces data entry errors, and ensures that the data is accurate and reliable.
+
+Considering nested and repeated fields
+You may consider nested and repeated fields to preserve the structure of your data and plan for optimized queries. Nested and repeated fields in BigQuery are advanced features that allow you to structure your data in more complex ways than traditional flat tables. They can be incredibly useful in certain scenarios, offering flexibility and efficiency for storing and querying data. Nested fields can help you organize data more efficiently. This structure works well with hierarchical data such as JSON or XML, one-to-many relationships, and data with different attributes. Repeated fields can work well with lists or arrays (items in an order) or aggregated data such as historical price changes. Repeated fields can efficiently store and enable querying of collections without the need for additional tables or joins. Nested and repeated fields can introduce complexities such as more complex queries, and data loading and transformation may require extra steps.
+
+Using correct data types
+BigQuery supports a variety of data types and each type has its advantages and disadvantages. Choosing the right data type for each column will improve query performance and results and reduce costs. When loading data into BigQuery, think about the type of queries that you will want to run, match data types with the appropriate columns, and perform data cleansing when necessary.
+
+Data cleansing and validation
+Validate your data for accuracy and completeness before loading it into BigQuery if possible. Deal with missing or incorrect values, outliers, and duplicates. Chapter 9, Cleansing and Transforming Data can be your guide for this best practice. More on data types can be found in the documentation at https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types.
+
+Partitioning and clustering
+For large datasets, consider using table partitioning and clustering. Leveraging BigQuery’s partitioning and clustering features can significantly boost query performance. Partitioning involves dividing large tables into smaller, manageable portions based on a specific column (for example, a date or timestamp). Clustering organizes data within each partition based on similar values in a designated column. By partitioning and clustering, BigQuery will only scan relevant partitions and clusters. This reduces the amount of data that’s processed during queries, which leads to faster and more cost-effective operations. Partition the data based on time or based on ranges of values in INTEGER columns for the best performance.
+
+Optimizing data loading
+Use batch loading whenever possible as it is more cost-effective than streaming. If you need to stream data, batch the streaming inserts to reduce costs and avoid excessive streaming API calls. Batch loading is free; streaming inserts are charged for rows that are inserted.
+
+By following these data preparation best practices, you will set a foundation for effective exploration and preparation in BigQuery. Next, we will review how to optimize storage and computing layers, which are the main service components of BigQuery.
+
+Best practices for optimizing storage
+After preparing and setting up your data, a good area to begin optimizing BigQuery usage is at the storage layer. BigQuery storage is relatively low cost, starting at $0.02 per GB per month (comparable to Cloud Storage or Amazon S3 storage costs) with the first 10 GB of storage per month free. When getting started with BigQuery, the first 10 GB of storage at no cost is a great advantage and creates a frictionless entry point for cost-conscious individuals and businesses. As you begin to load more data, you will want to be aware of the best practices for optimizing storage to operate efficiently and cost-effectively. In this section, we will highlight some of the best practices for managing your data storage in BigQuery.
+
+When you create a dataset, you can set the default table expiration (refer to Figure 10.1). This allows you to set the number of days after creation that the table will be automatically deleted. This is useful for temporary data that does not need to be preserved. You will want to think about how long you need to keep your data, and if the data does not need to be kept indefinitely, then consider setting a table expiration. One scenario could be to set temporary staging tables between the source and target tables during data cleansing or transformation with a standard expiration. If you know the data that’s being stored during transformation is temporary, the expiration setting removes the need to manually remove columns once processing has completed and reduces redundant unused table storage. This could be an alternate approach to automation and a best practice set by data engineering teams:
+
+Note
+
+Default table expiration can be set at the dataset level or when the table is created. You can also set expiration on a dataset’s default partition. This affects all newly created partitioned tables. Partition expiration time for individual tables can be set when partitioned tables are created.
+
+
+Figure 10.1 – Creating a dataset workflow with the option to set a default table expiration
+
+Setting a table expiration can create an ephemeral life cycle for your data preparation or data management practices. Consider using table expirations on temporary datasets where the data will not need to be preserved.
+
+Long-term and compressed storage
+BigQuery has two storage tiers for table data. Active storage is the default storage type and includes any table or table partition that has been modified in the last 90 days. This storage is priced as per the actual storage pricing. Long-term storage is the storage type for any table or table partition that has not been modified for 90 consecutive days. If you have tables that have not changed for 90 days, the storage price automatically drops by 50% using long-term storage. If a non-partitioned table or table partition is edited, the price reverts to the original storage pricing and the 90-day timer starts again.
+
+Storage pricing happens automatically within BigQuery, so you do not have to set or manage the table storage life cycle. Still, there are some best practices to follow to optimize your usage:
+
+Actions that reset the 90-day storage tier timer: Loading data into a table, copying data into a table, writing query results to a table, using DML or DDL, and streaming data into the table
+Actions that do not reset the 90-day storage tier timer: Table queries, creating a view that queries a table, exporting data from a table, and copying a table
+BigQuery Compressed Storage, also known as the physical storage billing model, is a pricing model that charges you for the actual amount of storage your data uses after it has been compressed. Compressed Storage can save you money on your BigQuery bills if you have a lot of data that is compressible. This is because many types of data, such as text data and numerical data, can be compressed significantly. To use Compressed Storage, you must enable it for your dataset. Once you have enabled Compressed Storage, your data will be compressed automatically. You will not need to make any changes to your queries or applications.
+
+### **1. Schema Design and Data Modeling**
+
+#### **1.1. Choose Appropriate Data Types**
+
+- **Example: Use Exact Data Types**
+
+  ```sql
+  -- Use INT64 for integer values, STRING for text
+  CREATE TABLE `your_project.your_dataset.users` (
+    user_id INT64,
+    user_name STRING,
+    signup_date DATE
+  );
+  ```
+
+#### **1.2. Normalize or Denormalize Based on Use Case**
+
+- **Example: Denormalized Table**
+
+  ```sql
+  -- Denormalized table for read-heavy operations
+  CREATE TABLE `your_project.your_dataset.sales_data` AS
+  SELECT s.sale_id, c.customer_name, p.product_name, s.sale_amount
+  FROM `your_project.your_dataset.sales` s
+  JOIN `your_project.your_dataset.customers` c
+  ON s.customer_id = c.customer_id
+  JOIN `your_project.your_dataset.products` p
+  ON s.product_id = p.product_id;
+  ```
+
+- **Example: Normalized Table**
+
+  ```sql
+  -- Normalized schema for write-heavy operations
+  CREATE TABLE `your_project.your_dataset.sales` (
+    sale_id INT64,
+    customer_id INT64,
+    product_id INT64,
+    sale_amount FLOAT64,
+    sale_date DATE
+  );
+
+  CREATE TABLE `your_project.your_dataset.customers` (
+    customer_id INT64,
+    customer_name STRING
+  );
+
+  CREATE TABLE `your_project.your_dataset.products` (
+    product_id INT64,
+    product_name STRING
+  );
+  ```
+
+#### **1.3. Use Appropriate Partitioning and Clustering**
+
+- **Example: Partitioned Table by Date**
+
+  ```sql
+  -- Partition by date for time-series data
+  CREATE TABLE `your_project.your_dataset.sales_data`
+  PARTITION BY DATE(sale_date) AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_sales_data`;
+  ```
+
+- **Example: Clustered Table by Column**
+
+  ```sql
+  -- Cluster by frequently filtered column
+  CREATE TABLE `your_project.your_dataset.sales_data`
+  CLUSTER BY product_id AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_sales_data`;
+  ```
+
+### **2. Query Optimization**
+
+#### **2.1. Use WHERE Clauses Efficiently**
+
+- **Example: Filter Early**
+
+  ```sql
+  -- Filter early to reduce the amount of data scanned
+  SELECT city, COUNT(*) AS count
+  FROM `your_project.your_dataset.users`
+  WHERE age > 30
+  GROUP BY city;
+  ```
+
+#### **2.2. Avoid SELECT *** 
+
+- **Example: Specify Required Columns**
+
+  ```sql
+  -- Only select necessary columns
+  SELECT user_id, user_name
+  FROM `your_project.your_dataset.users`;
+  ```
+
+#### **2.3. Optimize Joins**
+
+- **Example: Join with Filtered Tables**
+
+  ```sql
+  -- Filter tables before joining
+  WITH FilteredSales AS (
+    SELECT sale_id, customer_id, product_id, sale_amount
+    FROM `your_project.your_dataset.sales`
+    WHERE sale_amount > 100
+  )
+  SELECT f.sale_id, c.customer_name, p.product_name
+  FROM FilteredSales f
+  JOIN `your_project.your_dataset.customers` c
+  ON f.customer_id = c.customer_id
+  JOIN `your_project.your_dataset.products` p
+  ON f.product_id = p.product_id;
+  ```
+
+#### **2.4. Use Common Table Expressions (CTEs)**
+
+- **Example: Simplify Complex Queries**
+
+  ```sql
+  -- Use CTEs for readability and optimization
+  WITH SalesSummary AS (
+    SELECT product_id, SUM(sale_amount) AS total_sales
+    FROM `your_project.your_dataset.sales`
+    GROUP BY product_id
+  )
+  SELECT p.product_name, s.total_sales
+  FROM SalesSummary s
+  JOIN `your_project.your_dataset.products` p
+  ON s.product_id = p.product_id;
+  ```
+
+### **3. Data Loading and Storage**
+
+#### **3.1. Use Batch Loads for Large Data**
+
+- **Example: Batch Loading Data**
+
+  ```sql
+  -- Batch load large datasets for efficiency
+  LOAD DATA INTO `your_project.your_dataset.sales_data`
+  FROM `gs://your_bucket/sales_data/*.csv`
+  OPTIONS(format='CSV');
+  ```
+
+#### **3.2. Use Streaming Inserts for Real-Time Data**
+
+- **Example: Streaming Data Insertion**
+
+  ```sql
+  -- Insert real-time data into BigQuery
+  INSERT INTO `your_project.your_dataset.sales_data` (sale_id, customer_id, product_id, sale_amount, sale_date)
+  VALUES (12345, 67890, 54321, 100.00, '2024-09-19');
+  ```
+
+### **4. Cost Management**
+
+#### **4.1. Use Cost Control Mechanisms**
+
+- **Example: Use Approximate Aggregations**
+
+  ```sql
+  -- Use APPROX_COUNT_DISTINCT for faster results and lower cost
+  SELECT APPROX_COUNT_DISTINCT(user_id) AS unique_users
+  FROM `your_project.your_dataset.users`;
+  ```
+
+#### **4.2. Limit Data Scanned**
+
+- **Example: Using TABLESAMPLE**
+
+  ```sql
+  -- Use TABLESAMPLE to limit the amount of data scanned
+  SELECT *
+  FROM `your_project.your_dataset.sales_data`
+  TABLESAMPLE SYSTEM (10 PERCENT);
+  ```
+
+#### **4.3. Use Partitioned Tables**
+
+- **Example: Query Only Relevant Partitions**
+
+  ```sql
+  -- Query specific partitions to reduce cost
+  SELECT *
+  FROM `your_project.your_dataset.sales_data`
+  WHERE _PARTITIONDATE = '2024-09-01';
+  ```
+
+### **5. Performance Monitoring and Troubleshooting**
+
+#### **5.1. Analyze Query Execution Plan**
+
+- **Example: Using EXPLAIN**
+
+  ```sql
+  -- View query execution plan
+  EXPLAIN
+  SELECT city, COUNT(*) AS count
+  FROM `your_project.your_dataset.users`
+  GROUP BY city;
+  ```
+
+#### **5.2. Monitor Query Performance**
+
+- **Example: Query Plan Explanation**
+
+  ```sql
+  -- Check performance insights in the BigQuery UI
+  ```
+
+### **6. Data Security and Access Control**
+
+#### **6.1. Use IAM Roles and Permissions**
+
+- **Example: Grant Read Access**
+
+  ```sh
+  # Grant read access to a dataset
+  bq add-iam-policy-binding your_dataset \
+    --member='user:example@example.com' \
+    --role='roles/bigquery.dataViewer'
+  ```
+
+#### **6.2. Use Encryption**
+
+- **Example: Use Encryption Options**
+
+  ```sql
+  -- Enable encryption for sensitive data
+  CREATE TABLE `your_project.your_dataset.sensitive_data`
+  OPTIONS(
+    encryption_configuration = 'CUSTOM'
+  ) AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_data`;
+  ```
+
+### **7. Best Practices for Query Design**
+
+#### **7.1. Use Efficient SQL Functions**
+
+- **Example: Use Built-In Functions**
+
+  ```sql
+  -- Use BigQuery functions for efficiency
+  SELECT user_id, TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), last_login, DAY) AS days_since_last_login
+  FROM `your_project.your_dataset.users`;
+  ```
+
+#### **7.2. Avoid Expensive Operations**
+
+- **Example: Avoid Excessive CROSS JOINs**
+
+  ```sql
+  -- Avoid CROSS JOIN if possible
+  SELECT *
+  FROM `your_project.your_dataset.table1`
+  CROSS JOIN `your_project.your_dataset.table2`;
+  ```
+
+### **8. Data Cleanup and Maintenance**
+
+#### **8.1. Regularly Review and Clean Up Old Data**
+
+- **Example: Delete Old Partitions**
+
+  ```sql
+  -- Delete old partitions to free up space
+  ALTER TABLE `your_project.your_dataset.sales_data`
+  DROP PARTITION FOR DATE '2023-01-01';
+  ```
+
+#### **8.2. Use Table Expiration**
+
+- **Example: Set Table Expiration**
+
+  ```sql
+  -- Set expiration for temporary tables
+  CREATE TABLE `your_project.your_dataset.temp_data`
+  OPTIONS(expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)) AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_data`;
+  ```
+
+### **9. Data Transformation and Cleaning**
+
+#### **9.1. Use Data Transformation Functions**
+
+- **Example: Transform Data Using SQL Functions**
+
+  ```sql
+  -- Use SQL functions for data transformation
+  SELECT user_id, LOWER(user_name) AS lower_user_name
+  FROM `your_project.your_dataset.users`;
+  ```
+
+#### **9.2. Use Data Quality Checks**
+
+- **Example: Data Quality Validation**
+
+  ```sql
+  -- Validate data quality with checks
+  SELECT COUNT(*) AS invalid_entries
+  FROM `your_project.your_dataset.users`
+  WHERE user_id IS NULL OR user_name IS NULL;
+  ```
+
+### **10. Automation and Scheduling**
+
+#### **10.1. Use Scheduled Queries**
+
+- **Example: Automate Data Aggregation**
+
+  ```sql
+  -- Schedule a query to run daily
+  CREATE SCHEDULE `daily_aggregation` 
+  OPTIONS(
+    frequency = 'every 24 hours'
+  ) AS
+  SELECT city, COUNT(*) AS count
+  FROM `your_project.y

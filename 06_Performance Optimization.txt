@@ -1,0 +1,267 @@
+
+
+### **1. Query Optimization**
+
+#### **1.1. Use Appropriate Data Types**
+
+- **Example: Use STRING Instead of TEXT for Fixed-Length Data**
+
+  ```sql
+  -- Using STRING for a fixed-length identifier
+  SELECT user_id, user_name
+  FROM `your_project.your_dataset.users`
+  WHERE user_id = '12345';
+  ```
+
+#### **1.2. Avoid SELECT *** 
+
+- **Example: Specify Required Columns**
+
+  ```sql
+  -- Instead of using SELECT *
+  SELECT user_id, user_name
+  FROM `your_project.your_dataset.users`;
+  ```
+
+#### **1.3. Use WHERE Clauses Effectively**
+
+- **Example: Filter Early**
+
+  ```sql
+  -- Filter rows as early as possible to reduce data scanned
+  SELECT city, COUNT(*) AS count
+  FROM `your_project.your_dataset.users`
+  WHERE age > 30
+  GROUP BY city;
+  ```
+
+#### **1.4. Use JOINs Efficiently**
+
+- **Example: Filter Tables Before Joining**
+
+  ```sql
+  -- Filter tables before joining to minimize data processed
+  SELECT a.user_id, b.department_name
+  FROM (
+    SELECT user_id, department_id
+    FROM `your_project.your_dataset.users`
+    WHERE age > 30
+  ) a
+  INNER JOIN `your_project.your_dataset.departments` b
+  ON a.department_id = b.department_id;
+  ```
+
+#### **1.5. Avoid Complex Subqueries**
+
+- **Example: Use Common Table Expressions (CTEs)**
+
+  ```sql
+  -- Using CTE to simplify and optimize complex queries
+  WITH FilteredUsers AS (
+    SELECT user_id, department_id
+    FROM `your_project.your_dataset.users`
+    WHERE age > 30
+  )
+  SELECT f.user_id, d.department_name
+  FROM FilteredUsers f
+  INNER JOIN `your_project.your_dataset.departments` d
+  ON f.department_id = d.department_id;
+  ```
+
+### **2. Data Partitioning and Clustering**
+
+#### **2.1. Partitioning Tables**
+
+- **Example: Partition by Date**
+
+  ```sql
+  -- Creating a partitioned table
+  CREATE TABLE `your_project.your_dataset.sales_table`
+  PARTITION BY DATE(sales_date) AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_sales_data`;
+  ```
+
+- **Example: Querying Partitioned Data**
+
+  ```sql
+  -- Querying only a specific partition
+  SELECT *
+  FROM `your_project.your_dataset.sales_table`
+  WHERE sales_date BETWEEN '2024-01-01' AND '2024-01-31';
+  ```
+
+#### **2.2. Clustering Tables**
+
+- **Example: Cluster by Columns**
+
+  ```sql
+  -- Creating a clustered table
+  CREATE TABLE `your_project.your_dataset.sales_table`
+  CLUSTER BY city AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_sales_data`;
+  ```
+
+- **Example: Querying Clustered Data**
+
+  ```sql
+  -- Querying clustered data
+  SELECT city, SUM(sales)
+  FROM `your_project.your_dataset.sales_table`
+  GROUP BY city;
+  ```
+
+### **3. Materialized Views**
+
+#### **3.1. Creating Materialized Views**
+
+- **Example: Using Materialized Views**
+
+  ```sql
+  -- Creating a materialized view for pre-aggregated data
+  CREATE MATERIALIZED VIEW `your_project.your_dataset.mv_sales_summary` AS
+  SELECT city, SUM(sales) AS total_sales
+  FROM `your_project.your_dataset.sales_table`
+  GROUP BY city;
+  ```
+
+- **Example: Querying Materialized Views**
+
+  ```sql
+  -- Querying a materialized view
+  SELECT *
+  FROM `your_project.your_dataset.mv_sales_summary`;
+  ```
+
+### **4. Table Partitioning and Clustering Best Practices**
+
+- **Partition by Date**: Use date-based partitioning for tables with time-series data.
+- **Cluster by Columns**: Cluster tables by frequently queried columns to speed up filter operations.
+
+### **5. Query Execution Plan**
+
+#### **5.1. Analyze Query Execution Plan**
+
+- **Example: Using EXPLAIN**
+
+  ```sql
+  -- View the query execution plan
+  EXPLAIN
+  SELECT city, COUNT(*) AS count
+  FROM `your_project.your_dataset.users`
+  GROUP BY city;
+  ```
+
+#### **5.2. Optimize Based on Execution Plan**
+
+- **Example: Index Optimization**
+
+  ```sql
+  -- Optimize queries by understanding the execution plan and making adjustments
+  ```
+
+### **6. Data Storage and Format Optimization**
+
+#### **6.1. Use Efficient Storage Formats**
+
+- **Example: Use Parquet or ORC**
+
+  ```sql
+  -- Using Parquet format for efficient storage and query performance
+  CREATE TABLE `your_project.your_dataset.sales_table`
+  OPTIONS(
+    format='PARQUET'
+  ) AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_sales_data`;
+  ```
+
+#### **6.2. Data Compression**
+
+- **Example: Using Compressed Data**
+
+  ```sql
+  -- Use compressed formats for storage
+  CREATE TABLE `your_project.your_dataset.sales_table`
+  OPTIONS(
+    format='AVRO'
+  ) AS
+  SELECT *
+  FROM `your_project.your_dataset.raw_sales_data`;
+  ```
+
+### **7. Best Practices for Cost Management**
+
+#### **7.1. Use Query Cost Estimates**
+
+- **Example: Estimating Query Cost**
+
+  ```sql
+  -- Use query cost estimates to manage costs
+  ```
+
+#### **7.2. Limit Data Scanned**
+
+- **Example: Using TABLESAMPLE**
+
+  ```sql
+  -- Sampling data to reduce the amount processed
+  SELECT *
+  FROM `your_project.your_dataset.sales_table`
+  TABLESAMPLE SYSTEM (10 PERCENT);
+  ```
+
+#### **7.3. Optimize Query Execution**
+
+- **Example: Use Approximate Functions**
+
+  ```sql
+  -- Using APPROX_COUNT_DISTINCT for faster results
+  SELECT APPROX_COUNT_DISTINCT(user_id) AS unique_users
+  FROM `your_project.your_dataset.users`;
+  ```
+
+### **8. Managing and Optimizing Data Loads**
+
+#### **8.1. Batch Loading Data**
+
+- **Example: Loading Data in Batches**
+
+  ```sql
+  -- Load data in batches to improve performance
+  ```
+
+#### **8.2. Use Streaming Inserts Wisely**
+
+- **Example: Using Streaming Inserts**
+
+  ```sql
+  -- Use streaming inserts for real-time data
+  ```
+
+### **9. Monitoring and Troubleshooting**
+
+#### **9.1. Use Monitoring Tools**
+
+- **Example: Monitoring Query Performance**
+
+  ```sql
+  -- Use BigQuery monitoring tools to track performance
+  ```
+
+#### **9.2. Troubleshoot Slow Queries**
+
+- **Example: Investigating Slow Queries**
+
+  ```sql
+  -- Investigate and optimize slow queries using BigQuery UI tools
+  ```
+
+### **10. General Optimization Tips**
+
+- **Optimize Schema Design**: Properly design your schema to support efficient queries.
+- **Regular Maintenance**: Regularly review and optimize tables, partitions, and clusters.
+- **Indexing**: Utilize indexing where applicable to speed up query performance.
+
+By following these practices and examples, you can significantly improve query performance, reduce costs, and efficiently manage your data in BigQuery. Each strategy focuses on different aspects of optimization, from query structure and data partitioning to storage formats and cost management.

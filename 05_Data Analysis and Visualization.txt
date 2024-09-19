@@ -1,0 +1,456 @@
+Here are some common examples of data cleansing tasks:
+
+Identifying and correcting typos
+Filling in missing values
+Formatting data consistently
+Removing duplicate records
+Here are some examples of data transformation tasks:
+
+Converting data from one format to another
+Aggregating data (for example, summing sales figures by month)
+Normalizing data (for example, converting all dates into the same format)
+Formatting data for visualizations or machine learning
+
+### **1. Basic Data Analysis**
+
+#### **1.1. Aggregations**
+
+**Example: Counting Rows**
+
+```sql
+SELECT COUNT(*) AS total_count
+FROM `your_project.your_dataset.your_table`;
+```
+
+**Example: Sum of Values**
+
+```sql
+SELECT SUM(sales) AS total_sales
+FROM `your_project.your_dataset.sales_table`;
+```
+
+**Example: Average Calculation**
+
+```sql
+SELECT AVG(age) AS average_age
+FROM `your_project.your_dataset.your_table`;
+```
+
+**Example: Minimum and Maximum Values**
+
+```sql
+SELECT MIN(age) AS min_age, MAX(age) AS max_age
+FROM `your_project.your_dataset.your_table`;
+```
+
+#### **1.2. Grouped Aggregations**
+
+**Example: Group By with Aggregation**
+
+```sql
+SELECT city, COUNT(*) AS count_per_city
+FROM `your_project.your_dataset.your_table`
+GROUP BY city;
+```
+
+**Example: Group By with Multiple Aggregations**
+
+```sql
+SELECT city, AVG(age) AS avg_age, SUM(sales) AS total_sales
+FROM `your_project.your_dataset.your_table`
+GROUP BY city;
+```
+
+### **2. Advanced Data Analysis**
+
+#### **2.1. Window Functions**
+
+**Example: Ranking Data**
+
+```sql
+SELECT name, sales, 
+       RANK() OVER (ORDER BY sales DESC) AS sales_rank
+FROM `your_project.your_dataset.sales_table`;
+```
+
+**Example: Running Total**
+
+```sql
+SELECT date, sales,
+       SUM(sales) OVER (ORDER BY date) AS running_total
+FROM `your_project.your_dataset.sales_table`;
+```
+
+**Example: Moving Average**
+
+```sql
+SELECT date, sales,
+       AVG(sales) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg
+FROM `your_project.your_dataset.sales_table`;
+```
+
+#### **2.2. Correlations and Trends**
+
+**Example: Correlation Analysis**
+
+```sql
+SELECT CORR(age, sales) AS correlation
+FROM `your_project.your_dataset.your_table`;
+```
+
+**Example: Time Series Analysis**
+
+```sql
+SELECT EXTRACT(YEAR FROM date) AS year, 
+       SUM(sales) AS yearly_sales
+FROM `your_project.your_dataset.sales_table`
+GROUP BY year
+ORDER BY year;
+```
+
+### **3. Join and Merge Data**
+
+#### **3.1. Inner Join**
+
+**Example: Combining Tables**
+
+```sql
+SELECT a.name, b.department
+FROM `your_project.your_dataset.employees` a
+INNER JOIN `your_project.your_dataset.departments` b
+ON a.department_id = b.department_id;
+```
+
+#### **3.2. Left Join**
+
+**Example: Left Join to Include All Records**
+
+```sql
+SELECT a.name, b.department
+FROM `your_project.your_dataset.employees` a
+LEFT JOIN `your_project.your_dataset.departments` b
+ON a.department_id = b.department_id;
+```
+
+#### **3.3. Union All**
+
+**Example: Combining Results from Multiple Tables**
+
+```sql
+SELECT name, age FROM `your_project.your_dataset.table1`
+UNION ALL
+SELECT name, age FROM `your_project.your_dataset.table2`;
+```
+
+### **4. Data Transformation and Cleaning**
+
+#### **4.1. Data Normalization**
+
+**Example: Normalizing Data**
+
+```sql
+SELECT name, 
+       (age - MIN(age) OVER ()) / (MAX(age) OVER () - MIN(age) OVER ()) AS normalized_age
+FROM `your_project.your_dataset.your_table`;
+```
+
+#### **4.2. Data Aggregation and Pivot**
+
+**Example: Pivot Table**
+
+```sql
+SELECT *
+FROM (
+  SELECT city, EXTRACT(MONTH FROM date) AS month, sales
+  FROM `your_project.your_dataset.sales_table`
+)
+PIVOT (
+  SUM(sales) FOR month IN (1 AS Jan, 2 AS Feb, 3 AS Mar, 4 AS Apr, 5 AS May, 6 AS Jun, 7 AS Jul, 8 AS Aug, 9 AS Sep, 10 AS Oct, 11 AS Nov, 12 AS Dec)
+);
+```
+
+### **5. Complex Analysis**
+
+#### **5.1. Nested Queries**
+
+**Example: Using Nested Queries**
+
+```sql
+WITH TopCities AS (
+  SELECT city
+  FROM `your_project.your_dataset.your_table`
+  GROUP BY city
+  ORDER BY COUNT(*) DESC
+  LIMIT 10
+)
+SELECT city, COUNT(*) AS count_per_city
+FROM `your_project.your_dataset.your_table`
+WHERE city IN (SELECT city FROM TopCities)
+GROUP BY city;
+```
+
+#### **5.2. Recursive Queries**
+
+**Example: Recursive CTE for Hierarchical Data**
+
+```sql
+WITH RECURSIVE hierarchy AS (
+  SELECT id, name, manager_id
+  FROM `your_project.your_dataset.employees`
+  WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id
+  FROM `your_project.your_dataset.employees` e
+  JOIN hierarchy h ON e.manager_id = h.id
+)
+SELECT * FROM hierarchy;
+```
+
+### **6. Geospatial Analysis**
+
+#### **6.1. Distance Calculation**
+
+**Example: Calculating Distance Between Coordinates**
+
+```sql
+SELECT name, 
+       ST_Distance(ST_GeogPoint(longitude, latitude), ST_GeogPoint(-122.084, 37.421)) AS distance
+FROM `your_project.your_dataset.locations`;
+```
+
+#### **6.2. Geospatial Functions**
+
+**Example: Geospatial Query**
+
+```sql
+SELECT name
+FROM `your_project.your_dataset.places`
+WHERE ST_DWithin(
+  ST_GeogPoint(longitude, latitude),
+  ST_GeogPoint(-122.084, 37.421),
+  5000  -- Distance in meters
+);
+```
+
+### **7. Data Analysis with BigQuery ML**
+
+#### **7.1. Creating and Training a Model**
+
+**Example: Linear Regression**
+
+```sql
+CREATE OR REPLACE MODEL `your_project.your_dataset.linear_model`
+OPTIONS(model_type='linear_reg') AS
+SELECT *
+FROM `your_project.your_dataset.your_table`;
+```
+
+#### **7.2. Predicting with a Model**
+
+**Example: Making Predictions**
+
+```sql
+SELECT name, predicted_age
+FROM ML.PREDICT(MODEL `your_project.your_dataset.linear_model`,
+  (SELECT * FROM `your_project.your_dataset.your_table`));
+```
+
+### **8. Best Practices for Data Analysis**
+
+- **Use Standard SQL**: It provides more features and is more consistent.
+- **Optimize Queries**: Utilize partitioned and clustered tables, and avoid unnecessary joins.
+- **Monitor Performance**: Use the Query Plan Explanation tool to understand and optimize performance.
+- **Data Cleaning**: Ensure data is clean and well-structured before performing analysis.
+
+These examples cover a wide range of data analysis tasks you can perform using BigQuery. Each query demonstrates different aspects of data analysis, from basic aggregation to complex transformations and geospatial analysis.
+
+
+
+Visualization in BigQuery often involves exporting query results to visualization tools or using BigQuery's built-in features to create visual representations of your data. Here’s an exhaustive guide on how to work with visualizations in the context of BigQuery.
+
+### **1. Using BigQuery with Google Data Studio**
+
+Google Data Studio is a powerful tool for creating interactive dashboards and reports with data from BigQuery.
+
+#### **1.1. Connecting BigQuery to Data Studio**
+
+1. **Create a Data Studio Report**:
+   - Go to [Google Data Studio](https://datastudio.google.com/).
+   - Click on `Create` > `Report`.
+
+2. **Add BigQuery as a Data Source**:
+   - Click on `Add data`.
+   - Choose `BigQuery` as the data source.
+   - Authorize Data Studio to access BigQuery if prompted.
+   - Select your project, dataset, and table or use a custom query.
+
+3. **Visualize Data**:
+   - Drag and drop fields to create various charts and tables (e.g., bar charts, line graphs, pie charts).
+   - Customize the charts with filters, date ranges, and styles.
+
+**Example: Creating a Bar Chart**
+
+1. **Select Data Source**:
+   - Choose a table or use a custom query.
+   
+2. **Add a Bar Chart**:
+   - Drag the `bar chart` visualization type onto your report.
+   - Set the dimensions (e.g., `city`) and metrics (e.g., `total_sales`).
+
+3. **Customize**:
+   - Adjust colors, labels, and legends.
+
+### **2. Using Google Sheets with BigQuery**
+
+Google Sheets can be used for simple visualizations with data queried from BigQuery.
+
+#### **2.1. Importing Data from BigQuery to Google Sheets**
+
+1. **Open Google Sheets**:
+   - Go to [Google Sheets](https://sheets.google.com/).
+
+2. **Use the BigQuery Data Connector**:
+   - Click on `Extensions` > `BigQuery` > `Create new connection`.
+   - Authorize and select your BigQuery project, dataset, and table.
+
+3. **Import Data**:
+   - Write a SQL query or select a table.
+   - Click `Import` to load data into the sheet.
+
+**Example: Creating a Chart in Google Sheets**
+
+1. **Select Data Range**:
+   - Highlight the data you want to visualize.
+
+2. **Insert Chart**:
+   - Click on `Insert` > `Chart`.
+   - Choose chart type (e.g., Line chart, Pie chart).
+
+3. **Customize**:
+   - Use the Chart Editor to modify chart options and style.
+
+### **3. Using BigQuery with Looker Studio (formerly Looker)**
+
+Looker Studio allows for more advanced analytics and custom visualizations.
+
+#### **3.1. Connecting BigQuery to Looker Studio**
+
+1. **Open Looker Studio**:
+   - Go to [Looker Studio](https://lookerstudio.google.com/).
+
+2. **Create a New Report**:
+   - Click on `Create` > `Report`.
+
+3. **Add BigQuery as a Data Source**:
+   - Click `Add data`.
+   - Choose `BigQuery` and authorize access if needed.
+   - Select your project and dataset.
+
+4. **Build Visualizations**:
+   - Drag dimensions and measures onto your report.
+   - Use different visualization types (e.g., tables, charts, maps).
+
+**Example: Creating a Geo Map**
+
+1. **Add a Geo Map Visualization**:
+   - Drag the `Geo Map` visualization type onto the report.
+
+2. **Set Geo Dimensions**:
+   - Set dimensions such as `city` or `state`.
+
+3. **Set Metrics**:
+   - Choose metrics such as `sales` or `population`.
+
+4. **Customize**:
+   - Adjust color schemes, map styles, and other settings.
+
+### **4. Using Jupyter Notebooks with BigQuery**
+
+For advanced analytics and custom visualizations, you can use Jupyter Notebooks with Python libraries.
+
+#### **4.1. Querying BigQuery from Jupyter**
+
+1. **Set Up Environment**:
+   - Install necessary libraries (`google-cloud-bigquery`, `pandas`, `matplotlib`, `seaborn`).
+
+   ```bash
+   pip install google-cloud-bigquery pandas matplotlib seaborn
+   ```
+
+2. **Query BigQuery from Python**
+
+   ```python
+   from google.cloud import bigquery
+   import pandas as pd
+
+   client = bigquery.Client()
+   query = """
+   SELECT city, SUM(sales) AS total_sales
+   FROM `your_project.your_dataset.sales_table`
+   GROUP BY city
+   """
+   df = client.query(query).to_dataframe()
+   ```
+
+#### **4.2. Creating Visualizations**
+
+**Example: Bar Chart with Matplotlib**
+
+```python
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+plt.bar(df['city'], df['total_sales'])
+plt.xlabel('City')
+plt.ylabel('Total Sales')
+plt.title('Total Sales by City')
+plt.xticks(rotation=45)
+plt.show()
+```
+
+**Example: Line Plot with Seaborn**
+
+```python
+import seaborn as sns
+
+plt.figure(figsize=(10, 6))
+sns.lineplot(x='date', y='sales', data=df)
+plt.xlabel('Date')
+plt.ylabel('Sales')
+plt.title('Sales Over Time')
+plt.show()
+```
+
+### **5. Using Tableau with BigQuery**
+
+Tableau provides robust data visualization capabilities and can connect directly to BigQuery.
+
+#### **5.1. Connecting BigQuery to Tableau**
+
+1. **Open Tableau**:
+   - Go to [Tableau](https://www.tableau.com/).
+
+2. **Connect to Data**:
+   - Select `Google BigQuery` from the list of connectors.
+   - Authorize and select your BigQuery project, dataset, and table.
+
+3. **Build Visualizations**:
+   - Drag and drop fields onto your Tableau dashboard.
+   - Use various visualization types (e.g., histograms, scatter plots).
+
+**Example: Creating a Scatter Plot**
+
+1. **Drag Fields**:
+   - Drag `sales` to the X-axis and `profit` to the Y-axis.
+
+2. **Customize**:
+   - Adjust the size, color, and labels of the scatter plot.
+
+### **6. Visualization Best Practices**
+
+- **Choose the Right Type of Visualization**: Use charts and graphs that best represent the data and insights you want to convey (e.g., bar charts for comparisons, line charts for trends).
+- **Keep It Simple**: Avoid clutter and ensure visualizations are easy to interpret.
+- **Use Interactive Features**: Leverage interactive elements like filters and drill-downs for more dynamic reports.
+- **Optimize Performance**: Ensure that visualizations are efficient and responsive, especially when dealing with large datasets.
+
+These examples cover a variety of methods to visualize data from BigQuery, including using external tools like Google Data Studio, Google Sheets, Looker Studio, Jupyter Notebooks, and Tableau. Each tool provides different features and capabilities for creating effective visualizations.

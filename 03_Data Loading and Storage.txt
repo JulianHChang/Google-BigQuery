@@ -1,0 +1,331 @@
+Batch loading data
+Batch loading or bounded data is a process of loading data into BigQuery in a single operation. This can be done from a variety of sources, including files located in Google Cloud Storage or Google Drive, and local files. Acceptable file types include CSV, JSON, Apache Avro, ORC, and Apache Parquet formats. Batch loading is typically driven through the console UI, automated via API, or via scheduled jobs.
+
+When loading data from a source, you must first have a dataset where the table will be located. The dataset is a logical container for your table data. This is also where you select the region for your data to reside. After creating a dataset, you will create a table in BigQuery to store your data.
+
+Choosing the location of your data
+
+It’s important to consider the location of your data when creating a dataset and, ultimately, your tables. The dataset location determines the region where your data will be stored. If you plan to transfer data from a Cloud Storage bucket on a regular basis, optimize your architecture by having both the storage bucket and the BigQuery dataset location in the same region. Location proximity is a common best practice to optimize the performance of your cloud services.
+
+Empty tables can be created without loading data. You may use this table creation flexibility for situations where data is coming in the future via a pipeline or automated data loading scenario. In these cases, you will want to specify a schema to minimize issues when data arrives. For most batch scenarios, the source file will define the schema and BigQuery will autodetect it for you. There may be some adjustments to the schema you will want to make to validate whether all column data types are accurate. As we previously highlighted, the most accurate data type for each table column will allow you to write better queries and use SQL functions in your queries. Refer back to Chapter 3, Exploring Data in BigQuery for recommendations on exploring schemas and best practices around data types. We will also spend some time on SQL functions that rely on correct schema data types in Chapter 5, Querying BigQuery Data.
+
+Once your dataset is created, you can use the BigQuery API or the BigQuery console to load your data into tables. The BigQuery API provides a variety of methods for loading data, including the LOAD DATA statement, the LOAD DATA LOCAL statement, and the LOAD DATA FROM STORAGE statement. The BigQuery console provides a graphical interface for loading data and to use the console, you must first create a load job. A load job specifies the source data, the destination table, and the loading options. This is the workflow that you see when you select the CREATE TABLE option in your dataset in the BigQuery SQL Explorer:
+
+
+Creating a table within your dataset and using the source as a CSV upload or a CSV in Google Cloud Storage is the quickest way to get started loading data in BigQuery. At the end of this chapter, we will walk through an example that will show you how to do this.
+
+There are several benefits to batch loading data into BigQuery:
+
+It is a simple and efficient way to load large amounts of data
+There is no charge for loading batch data
+It can be scheduled to run on a regular basis, which makes it ideal for loading data that is updated frequently
+It can be used to load data from a variety of sources, including both local and cloud-based sources
+Batch loading is the approach you will likely begin with when getting started with BigQuery. In the next two sections, we will cover streaming ingestion and scheduled jobs in BigQuery to acclimate you with other options for loading data into tables.
+
+
+Scheduled loading of data
+There are various ways to schedule the loading of data in BigQuery. You may be familiar with the cron command-line utility on Unix operating systems. This is a simple service that schedules and orchestrates the execution of any command-line service. There are a few cron-like job schedulers that include service integrations you can take advantage of to schedule and automate loading jobs from sources. Start by knowing your data source. If there is a service that has existing integration, consider using it to simplify your data loads. In this section, we will discuss the BQDTS, Cloud Composer, and other approaches to schedule data loads.
+
+The BQDTS is a managed service that simplifies the process of ingesting data from various sources into BigQuery. It enables you to schedule and automate the transfer of data from common data sources such as Google Marketing Platform, Google Ads, YouTube, and more, directly into BigQuery for analysis.
+
+The BQDTS eliminates the need for manual data extraction, transformation, and loading (ETL) processes by providing pre-built connectors and configurations for different data sources. It ensures data is transferred securely and efficiently, maintaining data integrity throughout the process. You can set up scheduled transfers to regularly pull data from the data sources into BigQuery. This allows for the automatic and timely refresh of data for analysis.
+
+By utilizing the BQDTS, organizations can streamline the process of bringing data from different sources into BigQuery, enabling faster and more efficient data analysis. It simplifies data integration tasks, reduces manual effort, and ensures the availability of up-to-date data for business insights and decision-making. The BQDTS can be accessed via the Google Cloud console, the bq command-line tool, and the BQDTS API.
+
+Cloud Composer, a managed workflow orchestration service on Google Cloud, can also be used for scheduling data loading jobs in BigQuery. With Composer, you can create and manage workflows using directed acyclic graphs (DAGs). By defining tasks within the DAGs that interact with BigQuery, you can orchestrate the data loading process. Composer allows you to set schedules or triggers for the DAGs, ensuring regular and timely execution of data loading jobs. Consider Cloud Composer if you have existing experience with Apache Airflow or plan to schedule other tasks in Google Cloud.
+
+The best way to schedule the loading of data into BigQuery will depend on your specific needs and requirements. If you need to load data from a variety of sources, the BQDTS may be a good option. If you need more flexibility to plan other scheduled events in Google Cloud, Cloud Composer may be an option to consider. Before selecting an approach, start exploring integration capabilities and know your data source well.
+
+Next up, we will review cases where you do not need to load data and you will instead use BigQuery functionality to integrate with other services to access data stored outside of BigQuery.
+
+
+
+### **1. Loading Data into BigQuery**
+
+#### **1.1. From Google Cloud Storage (GCS)**
+
+**Example: Loading CSV Data**
+
+1. **Prepare Your Data**: Upload your CSV file to Google Cloud Storage.
+
+2. **Load Data Using BigQuery Console**:
+   - Go to the BigQuery web UI in the Google Cloud Console.
+   - Click on your dataset, then click “Create Table”.
+   - Select “Google Cloud Storage” as the source.
+   - Provide the path to your CSV file (e.g., `gs://your-bucket/your-file.csv`).
+   - Set the file format to “CSV”.
+   - Configure the schema or use automatic schema detection.
+   - Click “Create Table” to load the data.
+
+**Example: Loading JSON Data**
+
+1. **Prepare Your Data**: Upload your JSON file to Google Cloud Storage.
+
+2. **Load Data Using BigQuery Console**:
+   - Go to the BigQuery web UI.
+   - Click on your dataset, then click “Create Table”.
+   - Select “Google Cloud Storage” as the source.
+   - Provide the path to your JSON file (e.g., `gs://your-bucket/your-file.json`).
+   - Set the file format to “JSON”.
+   - Configure the schema or use automatic schema detection.
+   - Click “Create Table” to load the data.
+
+**Example: Using BigQuery Client Libraries**
+
+You can also use BigQuery client libraries to load data programmatically.
+
+```javascript
+// Using Node.js client library
+const {BigQuery} = require('@google-cloud/bigquery');
+const bigquery = new BigQuery();
+
+async function loadCSV() {
+  const datasetId = 'your_dataset';
+  const tableId = 'your_table';
+  const uri = 'gs://your-bucket/your-file.csv';
+
+  const options = {
+    sourceUris: [uri],
+    schema: 'name:string,age:integer',
+    skipLeadingRows: 1,
+    location: 'US',
+  };
+
+  await bigquery.dataset(datasetId).table(tableId).load(options);
+  console.log(`Loaded data from ${uri} into ${datasetId}.${tableId}`);
+}
+
+loadCSV();
+```
+
+#### **1.2. From Local Files**
+
+**Example: Uploading Local Files via Web UI**
+
+1. **Go to BigQuery Console**:
+   - Click on your dataset, then “Create Table”.
+   - Choose “Upload” as the source.
+   - Select the local file you want to upload.
+   - Configure the file format and schema.
+   - Click “Create Table”.
+
+**Example: Using BigQuery API**
+
+You can use the API to load local files:
+
+```python
+from google.cloud import bigquery
+
+client = bigquery.Client()
+
+def load_local_file():
+    dataset_id = 'your_dataset'
+    table_id = 'your_table'
+    file_path = 'path/to/your-file.csv'
+    
+    job_config = bigquery.LoadJobConfig(
+        source_format=bigquery.SourceFormat.CSV,
+        skip_leading_rows=1,
+        autodetect=True,
+    )
+    
+    with open(file_path, "rb") as source_file:
+        job = client.load_table_from_file(source_file, f"{dataset_id}.{table_id}", job_config=job_config)
+
+    job.result()  # Wait for the job to complete.
+    print(f"Loaded {job.output_rows} rows into {dataset_id}.{table_id}.")
+
+load_local_file()
+```
+
+#### **1.3. From Google Drive**
+
+**Example: Loading Data from Google Drive Using Web UI**
+
+1. **Prepare Your File**: Ensure the file is accessible in Google Drive.
+2. **Load Data Using BigQuery Console**:
+   - Go to BigQuery Console.
+   - Click on your dataset, then “Create Table”.
+   - Choose “Google Drive” as the source.
+   - Provide the file URL and configure the file format and schema.
+   - Click “Create Table”.
+
+**Example: Using Google Drive API**
+
+To programmatically load data from Google Drive, you first need to set up authentication and permissions.
+
+```python
+from googleapiclient.discovery import build
+from google.cloud import bigquery
+
+def load_from_drive(drive_file_id):
+    bigquery_client = bigquery.Client()
+    dataset_id = 'your_dataset'
+    table_id = 'your_table'
+
+    # Drive API setup
+    drive_service = build('drive', 'v3')
+
+    file_metadata = {
+        'name': 'your-file.csv',
+        'mimeType': 'application/vnd.google-apps.spreadsheet'
+    }
+
+    request = drive_service.files().export_media(fileId=drive_file_id, mimeType='application/vnd.ms-excel')
+    with open('/tmp/your-file.csv', 'wb') as file:
+        request.execute()
+    
+    job_config = bigquery.LoadJobConfig(
+        source_format=bigquery.SourceFormat.CSV,
+        skip_leading_rows=1,
+        autodetect=True,
+    )
+    
+    with open('/tmp/your-file.csv', 'rb') as source_file:
+        job = bigquery_client.load_table_from_file(source_file, f"{dataset_id}.{table_id}", job_config=job_config)
+    
+    job.result()  # Wait for the job to complete.
+    print(f"Loaded data from Google Drive into {dataset_id}.{table_id}.")
+
+# Use the file ID from Google Drive
+load_from_drive('your_drive_file_id')
+```
+
+### **2. Storage Options**
+
+#### **2.1. Tables**
+
+**Creating a Table**
+
+You can create a table using the web UI, SQL, or API.
+
+**Web UI**:
+- Go to BigQuery Console.
+- Select your dataset, then click “Create Table”.
+- Provide the necessary details (table name, schema, etc.).
+
+**SQL Example**:
+
+```sql
+CREATE TABLE `your_project.your_dataset.your_table` (
+  name STRING,
+  age INT64
+);
+```
+
+**API Example**:
+
+```python
+from google.cloud import bigquery
+
+def create_table():
+    client = bigquery.Client()
+    dataset_id = 'your_dataset'
+    table_id = 'your_table'
+    
+    schema = [
+        bigquery.SchemaField("name", "STRING"),
+        bigquery.SchemaField("age", "INTEGER"),
+    ]
+    
+    table = bigquery.Table(f"{dataset_id}.{table_id}", schema=schema)
+    table = client.create_table(table)
+    
+    print(f"Created table {table.project}.{table.dataset_id}.{table.table_id}")
+
+create_table()
+```
+
+#### **2.2. Partitioned Tables**
+
+**Creating Partitioned Tables**
+
+Partitioning helps in managing large datasets and improving query performance.
+
+**SQL Example**:
+
+```sql
+CREATE TABLE `your_project.your_dataset.partitioned_table` (
+  name STRING,
+  age INT64,
+  date TIMESTAMP
+)
+PARTITION BY DATE(date);
+```
+
+**Loading Data into Partitioned Tables**:
+
+```sql
+LOAD DATA INTO `your_project.your_dataset.partitioned_table`
+FROM 'gs://your-bucket/your-file.csv'
+OPTIONS (format = 'CSV', skip_leading_rows = 1);
+```
+
+#### **2.3. Clustered Tables**
+
+**Creating Clustered Tables**
+
+Clustering can improve performance by organizing data based on specified columns.
+
+**SQL Example**:
+
+```sql
+CREATE TABLE `your_project.your_dataset.clustered_table` (
+  name STRING,
+  age INT64,
+  city STRING
+)
+CLUSTER BY city;
+```
+
+**Loading Data into Clustered Tables**:
+
+```sql
+LOAD DATA INTO `your_project.your_dataset.clustered_table`
+FROM 'gs://your-bucket/your-file.csv'
+OPTIONS (format = 'CSV', skip_leading_rows = 1);
+```
+
+### **3. Managing Data**
+
+#### **3.1. Updating Data**
+
+To update data, you can use SQL `UPDATE` statements.
+
+**Example**:
+
+```sql
+UPDATE `your_project.your_dataset.your_table`
+SET age = 30
+WHERE name = 'John Doe';
+```
+
+#### **3.2. Deleting Data**
+
+To delete data, use SQL `DELETE` statements.
+
+**Example**:
+
+```sql
+DELETE FROM `your_project.your_dataset.your_table`
+WHERE name = 'John Doe';
+```
+
+#### **3.3. Schema Changes**
+
+To alter a table schema (e.g., add a new column), use the web UI or SQL commands.
+
+**Example**:
+
+```sql
+ALTER TABLE `your_project.your_dataset.your_table`
+ADD COLUMN email STRING;
+```
+
+### **4. Best Practices**
+
+- **Optimize Data Loading**: Use efficient formats like Avro or Parquet for large datasets.
+- **Partitioning and Clustering**: Utilize partitioned and clustered tables to optimize query performance.
+- **Data Management**: Regularly review and maintain your schema and data.
+
+These examples should give you a thorough understanding of how to load and manage data in Google BigQuery.
